@@ -1,0 +1,12 @@
+#board {
+	width:1000px;
+	height:600px;
+}
+
+#renderArea {
+	position:absolute;
+	top:10px;
+	left:10px;
+	width:1000px;
+	height:600px;
+}
