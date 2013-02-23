@@ -12,58 +12,88 @@ var handler = function(req, res) {
 };
 
 var app = http.createServer(handler);
-var io = require("socket.io").listen(app);
 var fs = require("fs");
 var canvas = require("canvas");
+var io = {};
 
 app.listen(8080);
-this.playerPositions = [{x:0,y:0}];
+this.players = [];
 this.cvs = new canvas(1000,600);
 this.ctx = this.cvs.getContext('2d');
+this.totalPlayers = 0;
 
 this.managePlayer = function(msg) {
   switch(msg.direction) {
     case "UP":
-      this.playerPositions[msg.player].y -= 20;
+      this.players[msg.player].y -= 20;
     break;
     case "DOWN":
-      this.playerPositions[msg.player].y += 20;
+      this.players[msg.player].y += 20;
     break;
     case "LEFT":
-       this.playerPositions[msg.player].x -= 20;
+       this.players[msg.player].x -= 20;
     break;
     case "RIGHT":
-        this.playerPositions[msg.player].x += 20;
+        this.players[msg.player].x += 20;
     break;
   }
+};
+
+this.generateToken=function() {
+  return Math.random().toString(36).substr(2) +
+    Math.random().toString(36).substr(2);
 };
 
 this.onImageRead=function(err,img) {
   if(err) throw err;
   this.playerImage = new canvas.Image();
   this.playerImage.src = img;
-  console.log(this.playerImage);
+  fs.readFile(__dirname+'/piece-pink.png',this.onImageRead2.bind(this));
 };
 
+this.onImageRead2=function(err,img) {
+  if(err) throw err;
+  this.playerImage2 = new canvas.Image();
+  this.playerImage2.src = img;
+  io = require("socket.io").listen(app);
+  io.sockets.on("connection",this.onConnectionSuccess.bind(this));
+};
+
+fs.readFile(__dirname+'/piece.png',this.onImageRead.bind(this));
+
 this.onConnectionSuccess=function(socket) {
-  console.log(this);
+  this.totalPlayers++;
   this.socket = socket;
-  fs.readFile(__dirname+'/piece.png',this.onImageRead.bind(this));
+  var token = this.generateToken();
+  var self = this;
+  var imgPiece;
+  if(this.totalPlayers== 1) {
+    imgPiece = this.playerImage;
+  } else {
+    imgPiece = this.playerImage2;
+  }
+  this.players[token] = {
+    img:imgPiece,
+    x:0,
+    y:0
+  };
   socket.emit("socketConnectSuccess", {
-    message: "connection.success"
+    message: {
+      id:token
+    }
   });
   socket.on('updateServer',this.onUpdateServer.bind(this));
 };
 
 this.onUpdateServer=function(msg) {
   this.managePlayer(msg);
-  var posX = this.playerPositions[msg.player].x;
-  var posY = this.playerPositions[msg.player].y;
-  var self = this;
   this.ctx.clearRect(0,0,1000,600);
-  this.ctx.drawImage(this.playerImage,posX,posY);
+  for(var player in this.players) {
+      var target = this.players[player];
+      this.ctx.drawImage(target.img,target.x,target.y,64,64);
+  }
   this.cvs.toDataURL(function(err,str){
-    self.socket.emit("updateBoard", {
+    io.sockets.emit("updateBoard", {
       message: [
         {
           data:str
@@ -72,5 +102,3 @@ this.onUpdateServer=function(msg) {
     });
   });
 };
-
-io.sockets.on("connection",this.onConnectionSuccess.bind(this));

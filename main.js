@@ -3,11 +3,12 @@ var isMoving = false;
 var direction = null;
 var socket = null;
 var cvs = null;
+var id = "";
 function init() {
 	this.cvs = $('#renderArea')[0];
 	this.socket = io.connect('http://192.168.1.102:8080');
 	this.socket.on('updateBoard', _.bind(this.draw, this));
-	this.socket.on('socketConnectSuccess', this.onSocketConnectSuccess);
+	this.socket.on('socketConnectSuccess',_.bind(this.onSocketConnectSuccess,this));
 	var self = this;
 	$(document).bind('keydown',function(e){
 		self.direction = self.getDirectionFromKeyCode(e.keyCode);
@@ -23,8 +24,9 @@ function draw(msg) {
 	this.cvs.src=msg.message[0].data;
 }
 
-function onSocketConnectSuccess() {
+function onSocketConnectSuccess(msg) {
 	console.log("connection success.");
+	this.id = msg.message.id;
 }
 
 function startMovement(e) {
@@ -36,7 +38,7 @@ function startMovement(e) {
 
 function update() {
 	//console.log('update ' + this.direction);
-	this.socket.emit('updateServer',{player:0,direction:this.direction});
+	this.socket.emit('updateServer',{player:this.id,direction:this.direction});
 }
 
 function stopMovement() {
