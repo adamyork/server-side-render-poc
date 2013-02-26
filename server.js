@@ -10,9 +10,12 @@ app.configure(function(){
 var fs = require("fs");
 var canvas = require("canvas");
 var io = {};
-
+var maxX=1000;
+var maxY=600;
 this.players = [];
-this.cvs = new canvas(1000,600);
+
+this.cvs = new canvas(maxX,maxY);
+
 this.ctx = this.cvs.getContext('2d');
 this.totalPlayers = 0;
 
@@ -31,6 +34,12 @@ this.managePlayer = function(msg) {
         this.players[msg.player].x += 20;
     break;
   }
+    if ((this.players[msg.player].y < 0) || (this.players[msg.player].y > maxY - 64) ||
+        (this.players[msg.player].x < 0) || (this.players[msg.player].x > maxX - 64)) {
+        io.sockets.socket(msg.player).emit("stopMovement");
+	console.log("stop moving");
+    }
+    
 };
 
 this.generateToken=function() {
@@ -50,6 +59,7 @@ this.onImageRead2=function(err,img) {
   this.playerImage2 = new canvas.Image();
   this.playerImage2.src = img;
   io = require("socket.io").listen(server);
+  io.set('log level', 2); 
   io.sockets.on("connection",this.onConnectionSuccess.bind(this));
 };
 
@@ -58,7 +68,7 @@ fs.readFile(__dirname+'/piece.png',this.onImageRead.bind(this));
 this.onConnectionSuccess=function(socket) {
   this.totalPlayers++;
   this.socket = socket;
-  var token = this.generateToken();
+  var token = socket.id
   var self = this;
   var imgPiece;
   if(this.totalPlayers== 1) {
@@ -71,6 +81,7 @@ this.onConnectionSuccess=function(socket) {
     x:0,
     y:0
   };
+    console.log("id:" + socket.id);
   socket.emit("socketConnectSuccess", {
     message: {
       id:token

@@ -9,15 +9,16 @@ function init() {
 	this.socket = io.connect('http://localhost:8080');
 	this.socket.on('updateBoard', _.bind(this.draw, this));
 	this.socket.on('socketConnectSuccess',_.bind(this.onSocketConnectSuccess,this));
+        this.socket.on('stopMovement',_.bind(this.onStopMovement,this));
 	var self = this;
 	$(document).bind('keydown',function(e){
 		self.direction = self.getDirectionFromKeyCode(e.keyCode);
 		console.log("change dir " + self.direction);
 		self.startMovement(e);
 	});
-	$(document).bind('keyup',function(e){
-		self.stopMovement();
-	});
+//	$(document).bind('keyup',function(e){
+//		self.stopMovement();
+//	});
 }
 
 function draw(msg) {
@@ -41,7 +42,8 @@ function update() {
 	this.socket.emit('updateServer',{player:this.id,direction:this.direction});
 }
 
-function stopMovement() {
+function onStopMovement(msg) {
+    	console.log("stop moving");
 	if(this.isMoving) {
 		this.isMoving = false;
 		clearInterval(this.movementInterval);
