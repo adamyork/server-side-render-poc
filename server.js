@@ -1,22 +1,16 @@
 var http = require("http");
-var https = require("https");
-var handler = function(req, res) {
-  return fs.readFile(__dirname + "/index.html", function(err, data) {
-    if (err) {
-      res.writeHead(500);
-      return res.end("Error loading index.html");
-    }
-    res.writeHead(200);
-    return res.end(data);
-  });
-};
 
-var app = http.createServer(handler);
+var express = require('express');
+var app = express();
+var server = http.createServer(app).listen(8080);
+app.configure(function(){
+  app.use(express.static(__dirname + '/public'));
+});
+
 var fs = require("fs");
 var canvas = require("canvas");
 var io = {};
 
-app.listen(8080);
 this.players = [];
 this.cvs = new canvas(1000,600);
 this.ctx = this.cvs.getContext('2d');
@@ -55,7 +49,7 @@ this.onImageRead2=function(err,img) {
   if(err) throw err;
   this.playerImage2 = new canvas.Image();
   this.playerImage2.src = img;
-  io = require("socket.io").listen(app);
+  io = require("socket.io").listen(server);
   io.sockets.on("connection",this.onConnectionSuccess.bind(this));
 };
 

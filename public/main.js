@@ -6,7 +6,7 @@ var cvs = null;
 var id = "";
 function init() {
 	this.cvs = $('#renderArea')[0];
-	this.socket = io.connect('http://192.168.1.102:8080');
+	this.socket = io.connect('http://localhost:8080');
 	this.socket.on('updateBoard', _.bind(this.draw, this));
 	this.socket.on('socketConnectSuccess',_.bind(this.onSocketConnectSuccess,this));
 	var self = this;
