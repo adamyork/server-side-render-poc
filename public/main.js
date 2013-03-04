@@ -33,7 +33,7 @@ function onSocketConnectSuccess(msg) {
 function startMovement(e) {
 	if(!this.isMoving) {
 		this.isMoving = true;
-		this.movementInterval = setInterval(_.bind(this.update,this),100);
+		this.movementInterval = setInterval(_.bind(this.update,this),16);
 	}
 }
 
